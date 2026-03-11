@@ -203,7 +203,37 @@ function setBonus(textFile, driverID, date, newValue) {
 // Returns: number (-1 if driverID not found)
 // ============================================================
 function countBonusPerMonth(textFile, driverID, month) {
-    // TODO: Implement this function
+    const lines = fs.readFileSync(textFile, 'utf8').trim().split('\n');
+
+    //  if driverID exists in file
+    let driverExists = false;
+    let count = 0;
+
+    // Loop through lines to find matching driverID and month, then count hasBonus true
+    for (let line of lines) {
+        const columns = line.split(',');
+        const id = columns[0].trim();
+        const date = columns[2].trim(); // date is "yyyy-mm-dd"
+        const hasBonus = columns[9].trim(); // hasBonus is last column
+
+        if (id === driverID) {
+            driverExists = true;
+
+            // Get month from date and remove leading zero
+            const lineMonth = parseInt(date.split('-')[1]);
+            const inputMonth = parseInt(month);
+
+            // If month matches and hasBonus is true, count it
+            if (lineMonth === inputMonth && hasBonus === 'true') {
+                count++;
+            }
+        }
+    }
+
+    // Return -1 if driverID not found
+    if (!driverExists) return -1;
+
+    return count;
 }
 
 // ============================================================
