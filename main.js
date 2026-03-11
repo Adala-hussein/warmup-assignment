@@ -67,8 +67,20 @@ function getIdleTime(startTime, endTime) {
 // Returns: string formatted as h:mm:ss
 // ============================================================
 function getActiveTime(shiftDuration, idleTime) {
-    // TODO: Implement this function
+    // Helper (converts to seconds ya adala)
+    const toSeconds = (timeStr) => {
+        let [h, m, s] = timeStr.trim().split(':').map(Number);
+        return h * 3600 + m * 60 + s;
+    };
+    // activeTime = diff
+    const diff = toSeconds(shiftDuration) - toSeconds(idleTime);
+
+    const h = Math.floor(diff / 3600);
+    const m = Math.floor((diff % 3600) / 60);
+    const s = diff % 60;
+    return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
+
 
 // ============================================================
 // Function 4: metQuota(date, activeTime)
