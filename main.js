@@ -89,7 +89,19 @@ function getActiveTime(shiftDuration, idleTime) {
 // Returns: boolean
 // ============================================================
 function metQuota(date, activeTime) {
-    // TODO: Implement this function
+    // Convert activeTime "h:mm:ss" to total seconds
+    const toSeconds = (timeStr) => {
+        let [h, m, s] = timeStr.trim().split(':').map(Number);
+        return h * 3600 + m * 60 + s;
+    };
+
+    const [year, month, day] = date.split('-').map(Number);
+
+    //  Eid period (April 10-30, 2025)
+    const isEid = (year === 2025 && month === 4 && day >= 10 && day <= 30);
+    const quota = isEid ? 6 * 3600 : 8 * 3600 + 24 * 60;
+    // Return true if activeTime >= quota, false otherwise
+    return toSeconds(activeTime) >= quota;
 }
 
 // ============================================================
