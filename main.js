@@ -111,7 +111,60 @@ function metQuota(date, activeTime) {
 // Returns: object with 10 properties or empty object {}
 // ============================================================
 function addShiftRecord(textFile, shiftObj) {
-    // TODO: Implement this function
+    // Read file using fs and split into lines
+    const lines = fs.readFileSync(textFile, 'utf8').trim().split('\n');
+
+    //  if driverID and date already exist in the text file
+    for (let line of lines) {
+        const [id, , date] = line.split(',');
+        if (id.trim() === shiftObj.driverID && date.trim() === shiftObj.date) {
+            return {};// Return empty object if duplicate found
+        }
+    }
+
+    // Calculate all values using functions 1-4
+    const shiftDuration = getShiftDuration(shiftObj.startTime, shiftObj.endTime);
+    const idleTime = getIdleTime(shiftObj.startTime, shiftObj.endTime);
+    const activeTime = getActiveTime(shiftDuration, idleTime);
+    const quota = metQuota(shiftObj.date, activeTime);
+
+    // Create new record object with 10 properties
+    const newRecord = {
+        driverID: shiftObj.driverID,
+        driverName: shiftObj.driverName,
+        date: shiftObj.date,
+        startTime: shiftObj.startTime,
+        endTime: shiftObj.endTime,
+        shiftDuration: shiftDuration,
+        idleTime: idleTime,
+        activeTime: activeTime,
+        metQuota: quota,
+        hasBonus: false
+    };
+
+    // Create new line to add to file
+    const newLine = `${newRecord.driverID},${newRecord.driverName},${newRecord.date},${newRecord.startTime},${newRecord.endTime},${newRecord.shiftDuration},${newRecord.idleTime},${newRecord.activeTime},${newRecord.metQuota},${newRecord.hasBonus}`;
+
+    // Find last driverID 
+    let lastIndex = -1;
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].split(',')[0].trim() === shiftObj.driverID) {
+            lastIndex = i;
+        }
+    }
+
+    // If driverID not found, add at end, else insert after last record
+    if (lastIndex === -1) {
+        lines.push(newLine);
+    } else {
+        lines.splice(lastIndex + 1, 0, newLine);
+    }
+
+    // Write back to file
+    fs.writeFileSync(textFile, lines.join('\n'), 'utf8');
+
+    return newRecord;
+
 }
 
 // ============================================================
