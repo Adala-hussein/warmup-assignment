@@ -29,8 +29,36 @@ function getShiftDuration(startTime, endTime) {
 // Returns: string formatted as h:mm:ss
 // ============================================================
 function getIdleTime(startTime, endTime) {
-    // TODO: Implement this function
+    const toSeconds = (timeStr) => {
+        const [time, period] = timeStr.trim().split(' ');
+        let [h, m, s] = time.split(':').map(Number);
+        if (period === 'pm' && h !== 12) h += 12;
+        if (period === 'am' && h === 12) h = 0;
+        return h * 3600 + m * 60 + s;
+    };
+
+    // Delivery hours: 8AM to 10PM
+    const deliveryStart = 8 * 3600;
+    const deliveryEnd = 22 * 3600;
+
+    const start = toSeconds(startTime);
+    const end = toSeconds(endTime);
+
+    // Calculate idle time before 8AM and after 10PM
+    let idle = 0;
+    if (start < deliveryStart) {
+        idle += deliveryStart - start;
+    }
+    if (end > deliveryEnd) {
+        idle += end - deliveryEnd;
+    }
+
+    const h = Math.floor(idle / 3600);
+    const m = Math.floor((idle % 3600) / 60);
+    const s = idle % 60;
+    return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
+
 
 // ============================================================
 // Function 3: getActiveTime(shiftDuration, idleTime)
