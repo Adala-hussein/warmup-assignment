@@ -280,7 +280,58 @@ function getTotalActiveHoursPerMonth(textFile, driverID, month) {
 // Returns: string formatted as hhh:mm:ss
 // ============================================================
 function getRequiredHoursPerMonth(textFile, rateFile, bonusCount, driverID, month) {
-    // TODO: Implement this function
+    // Read both files
+    const shiftLines = fs.readFileSync(textFile, 'utf8').trim().split('\n');
+    const rateLines = fs.readFileSync(rateFile, 'utf8').trim().split('\n');
+
+    // Find driver's dayOff from rateFile
+    let dayOff = '';
+    for (let line of rateLines) {
+        const columns = line.split(',');
+        if (columns[0].trim() === driverID) {
+            dayOff = columns[1].trim(); // dayOff is 2nd column
+        }
+    }
+
+    // Days of week array to convert day name to number
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    let totalSeconds = 0;
+
+    for (let line of shiftLines) {
+        const columns = line.split(',');
+        const id = columns[0].trim();
+        const date = columns[2].trim();
+
+        if (id === driverID) {
+            const lineMonth = parseInt(date.split('-')[1]);
+
+            if (lineMonth === month) {
+                // Get day of week for this date
+                const dateObj = new Date(date);
+                const dayName = days[dateObj.getDay()];
+
+                // Skip if it is driver's day off
+                if (dayName === dayOff) continue;
+
+                // Check if date is in Eid period (April 10-30, 2025)
+                const [year, m, day] = date.split('-').map(Number);
+                const isEid = (year === 2025 && m === 4 && day >= 10 && day <= 30);
+
+                // Add daily quota in seconds
+                const dailyQuota = isEid ? 6 * 3600 : 8 * 3600 + 24 * 60;
+                totalSeconds += dailyQuota;
+            }
+        }
+    }
+
+    // Reduce 2 hours for each bonus
+    totalSeconds -= bonusCount * 2 * 3600;
+
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
 // ============================================================
