@@ -343,7 +343,53 @@ function getRequiredHoursPerMonth(textFile, rateFile, bonusCount, driverID, mont
 // Returns: integer (net pay)
 // ============================================================
 function getNetPay(driverID, actualHours, requiredHours, rateFile) {
-    // TODO: Implement this function
+    // Read the rate file
+    const rateLines = fs.readFileSync(rateFile, 'utf8').trim().split('\n');
+    // Find driver's basePay and tier from rateFile
+    let basePay = 0;
+    let tier = 0;
+    for (let line of rateLines) {
+        const columns = line.split(',');
+        if (columns[0].trim() === driverID) {
+            basePay = parseInt(columns[2].trim()); // basePay is 3rd column
+            tier = parseInt(columns[3].trim());    // tier is 4th column
+        }
+    }
+
+    // Allowed missing hours per tier
+    const allowedMissing = { 1: 50, 2: 20, 3: 10, 4: 3 };
+
+    // Convert actualHours and requiredHours to total seconds
+    const toSeconds = (timeStr) => {
+        const [h, m, s] = timeStr.trim().split(':').map(Number);
+        return h * 3600 + m * 60 + s;
+    };
+
+    const actualSeconds = toSeconds(actualHours);
+    const requiredSeconds = toSeconds(requiredHours);
+
+    // If actual >= required, no deduction
+    if (actualSeconds >= requiredSeconds) return basePay;
+
+    // Calculate missing hours in seconds
+    let missingSeconds = requiredSeconds - actualSeconds;
+
+    // Remove allowed missing hours
+    const allowedSeconds = allowedMissing[tier] * 3600;
+    missingSeconds -= allowedSeconds;
+
+    // If missing is within allowed, no deduction
+    if (missingSeconds <= 0) return basePay;
+
+    // Only full hours count
+    const missingHours = Math.floor(missingSeconds / 3600);
+
+    // Calculate deduction
+    const deductionRatePerHour = Math.floor(basePay / 185);
+    const salaryDeduction = missingHours * deductionRatePerHour;
+
+    return basePay - salaryDeduction; // Net pay 
+
 }
 
 module.exports = {
